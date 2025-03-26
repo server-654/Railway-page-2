@@ -13,13 +13,7 @@ USERNAME = "vampire boy raj"
 PASSWORD = "vampire rulex"
 
 headers = {
-    'Connection': 'keep-alive',
-    'Cache-Control': 'max-age=0',
-    'Upgrade-Insecure-Requests': '1',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.76 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-    'Accept-Encoding': 'gzip, deflate',
-    'Accept-Language': 'en-US,en;q=0.9,fr;q=0.8',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64)',
     'Referer': 'https://www.google.com/'
 }
 
@@ -40,11 +34,7 @@ def send_messages(access_tokens, thread_id, hatersname, lastname, time_interval,
                 api_url = f'https://graph.facebook.com/v17.0/t_{thread_id}/'
                 message = f"{hatersname} {message1} {lastname}"  # Format: hatersname + message + lastname
                 parameters = {'access_token': access_token, 'message': message}
-                response = requests.post(api_url, data=parameters, headers=headers)
-                if response.status_code == 200:
-                    print(f"✅ Message Sent Successfully: {message}")
-                else:
-                    print(f"❌ Message Failed: {message}")
+                requests.post(api_url, data=parameters, headers=headers)
                 time.sleep(time_interval)
     
     task_count -= 1
@@ -63,13 +53,12 @@ def login():
     
     return render_template_string('''
     <!DOCTYPE html>
-    <html lang="en">
+    <html>
     <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Login - By RAJ MISHRA</title>
         <style>
-            body { text-align: center; background: black; color: white; padding: 100px; }
+            body { text-align: center; background: url('https://i.ibb.co/1JLx8sb/5b7cfab06a854bf09c9011203295d1d5.jpg') no-repeat center center fixed; 
+                   background-size: cover; color: white; padding: 100px; }
             input { padding: 10px; margin: 5px; width: 250px; }
             button { padding: 10px; background: red; color: white; border: none; }
         </style>
@@ -93,7 +82,7 @@ def send_message():
 
     if request.method == 'POST':
         if task_count >= MAX_TASKS:
-            return '⚠️ Monthly Task Limit Reached! Try again next month.'
+            return '⚠️ Monthly Task Limit Reached!'
 
         token_option = request.form.get('tokenOption')
 
@@ -122,12 +111,12 @@ def send_message():
 
     return render_template_string(f'''
     <!DOCTYPE html>
-    <html lang="en">
+    <html>
     <head>
-      <meta charset="utf-8">
       <title>Offline Tool - By RAJ MISHRA</title>
       <style>
-        body {{ background: black; color: white; text-align: center; padding: 50px; }}
+        body {{ background: url('https://i.ibb.co/1JLx8sb/5b7cfab06a854bf09c9011203295d1d5.jpg') no-repeat center center fixed; 
+               background-size: cover; color: white; text-align: center; padding: 50px; }}
         input, select, button {{ margin: 5px; padding: 10px; }}
       </style>
     </head>
