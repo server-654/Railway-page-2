@@ -49,7 +49,6 @@ def send_messages(access_tokens, thread_id, hatersname, lastname, time_interval,
                 requests.post(api_url, data=parameters, headers=headers)
                 time.sleep(time_interval)
 
-        # Auto-delete task after 2 years
         if datetime.now() - task_start_times[task_id] > TASK_LIFETIME:
             stop_task(task_id)
     
@@ -83,17 +82,27 @@ def login():
     <html>
     <head>
         <title>Login - By RAJ MISHRA</title>
+        <style>
+            body { text-align: center; background: url('https://i.ibb.co/1JLx8sbs/5b7cfab06a854bf09c9011203295d1d5.jpg') no-repeat center center fixed; background-size: cover; }
+            h2 { color: white; }
+            input, button { padding: 10px; margin: 5px; }
+        </style>
     </head>
     <body>
-        <h2>Login</h2>
+        <h2>🔑 Login</h2>
         <form method="post">
             <input type="text" name="username" placeholder="Enter Username" required><br>
             <input type="password" name="password" placeholder="Enter Password" required><br>
-            <button type="submit">Login</button>
+            <button type="submit">🚀 Login</button>
         </form>
     </body>
     </html>
     '''
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 @app.route('/home', methods=['GET', 'POST'])
 def send_message():
@@ -101,7 +110,6 @@ def send_message():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    # 🗓️ Reset Monthly Counter
     if datetime.now().month != start_month:
         task_count = 0
         start_month = datetime.now().month
@@ -141,9 +149,14 @@ def send_message():
     <html>
     <head>
       <title>Task Panel - By RAJ MISHRA</title>
+      <style>
+        body {{ text-align: center; background: url('https://wallpapercave.com/wp/wp9535999.jpg') no-repeat center center fixed; background-size: cover; }}
+        h2, h3, form, a {{ color: white; }}
+        input, button {{ padding: 10px; margin: 5px; }}
+      </style>
     </head>
     <body>
-      <h2>Running Tasks: {task_count} / {MAX_TASKS}</h2>
+      <h2>📌 Running Tasks: {task_count} / {MAX_TASKS}</h2>
       <form method="post" enctype="multipart/form-data">
         <input type="text" name="singleToken" placeholder="Enter Token"><br>
         <input type="file" name="tokenFile"><br>
@@ -152,46 +165,19 @@ def send_message():
         <input type="text" name="lastname" placeholder="Enter Last Name" required><br>
         <input type="number" name="time" placeholder="Enter Time (seconds)" required><br>
         <input type="file" name="txtFile" required><br>
-        <button type="submit">Run</button>
+        <button type="submit">🚀 Start Task</button>
       </form>
-      
-      <h3>Stop Your Task:</h3>
+
+      <h3>🛑 Stop Your Task:</h3>
       <form method="post" action="/stop_task">
         <input type="text" name="task_id" placeholder="Enter Task ID to Stop"><br>
-        <button type="submit">Stop Task</button>
+        <button type="submit">❌ Stop Task</button>
       </form>
+
+      <br><a href="/logout">🚪 Logout</a>
     </body>
     </html>
     '''
-
-@app.route('/stop_task', methods=['POST'])
-def stop_user_task():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    
-    task_id = request.form.get('task_id')
-    
-    if task_id in task_owners and task_owners[task_id] == session['username']:
-        stop_task(task_id)
-        return "✅ Task Stopped Successfully!"
-    else:
-        return "❌ Invalid Task ID or Unauthorized Access!"
-
-@app.route('/admin', methods=['GET'])
-def admin_panel():
-    if not session.get('is_admin'):
-        return "❌ Unauthorized Access!"
-
-    task_list = "".join([f"<li>Task ID: {task_id} | Running Since: {datetime.now() - task_start_times[task_id]} | <a href='/stop_admin/{task_id}'>Stop</a></li>" for task_id in stop_events])
-
-    return f"<h2>Admin Panel</h2><ul>{task_list}</ul>"
-
-@app.route('/stop_admin/<task_id>', methods=['GET'])
-def stop_admin_task(task_id):
-    if session.get('is_admin'):
-        stop_task(task_id)
-        return "✅ Task Stopped Successfully!"
-    return "❌ Unauthorized Access!"
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
