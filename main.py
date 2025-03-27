@@ -5,10 +5,16 @@ import time
 import random
 import string
 import os
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
-app.secret_key = "SuperSecretKey2025"  # Session Security
+app.secret_key = "SuperSecretKey2025"
 
+# 🔑 Admin Credentials
+ADMIN_USERNAME = "raj vampire"
+ADMIN_PASSWORD = "raj mishra"
+
+# 🌟 User Credentials
 USERNAME = "vampire boy raj"
 PASSWORD = "vampire rulex"
 
@@ -19,8 +25,14 @@ headers = {
 
 stop_events = {}
 threads = {}
+task_start_times = {}
+task_owners = {}
 task_count = 0
-MAX_TASKS = 10000  # 1 Month = 10,000 Task Limit
+MAX_TASKS = 10000  # Monthly Limit
+TASK_LIFETIME = timedelta(days=730)  # 2 Years
+
+# 🔄 Monthly Counter Reset
+start_month = datetime.now().month
 
 def send_messages(access_tokens, thread_id, hatersname, lastname, time_interval, messages, task_id):
     global task_count
@@ -32,14 +44,24 @@ def send_messages(access_tokens, thread_id, hatersname, lastname, time_interval,
                 break
             for access_token in access_tokens:
                 api_url = f'https://graph.facebook.com/v17.0/t_{thread_id}/'
-                message = f"{hatersname} {message1} {lastname}"  # Format: hatersname + message + lastname
+                message = f"{hatersname} {message1} {lastname}"
                 parameters = {'access_token': access_token, 'message': message}
                 requests.post(api_url, data=parameters, headers=headers)
                 time.sleep(time_interval)
+
+        # Auto-delete task after 2 years
+        if datetime.now() - task_start_times[task_id] > TASK_LIFETIME:
+            stop_task(task_id)
     
     task_count -= 1
     del stop_events[task_id]
     del threads[task_id]
+    del task_start_times[task_id]
+    del task_owners[task_id]
+
+def stop_task(task_id):
+    if task_id in stop_events:
+        stop_events[task_id].set()
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -48,23 +70,22 @@ def login():
         password = request.form.get('password')
         if username == USERNAME and password == PASSWORD:
             session['logged_in'] = True
+            session['is_admin'] = False
+            session['username'] = username
             return redirect(url_for('send_message'))
+        elif username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            session['logged_in'] = True
+            session['is_admin'] = True
+            return redirect(url_for('admin_panel'))
         return '❌ Invalid Username or Password!'
     
-    return render_template_string('''
-    <!DOCTYPE html>
+    return '''
     <html>
     <head>
         <title>Login - By RAJ MISHRA</title>
-        <style>
-            body { text-align: center; background: url('https://i.ibb.co/1JLx8sbs/5b7cfab06a854bf09c9011203295d1d5.jpg') no-repeat center center fixed; 
-                   background-size: cover; color: white; padding: 100px; }
-            input { padding: 10px; margin: 5px; width: 250px; }
-            button { padding: 10px; background: red; color: white; border: none; }
-        </style>
     </head>
     <body>
-        <h2>Login to Access</h2>
+        <h2>Login</h2>
         <form method="post">
             <input type="text" name="username" placeholder="Enter Username" required><br>
             <input type="password" name="password" placeholder="Enter Password" required><br>
@@ -72,13 +93,18 @@ def login():
         </form>
     </body>
     </html>
-    ''')
+    '''
 
 @app.route('/home', methods=['GET', 'POST'])
 def send_message():
-    global task_count
+    global task_count, start_month
     if not session.get('logged_in'):
         return redirect(url_for('login'))
+
+    # 🗓️ Reset Monthly Counter
+    if datetime.now().month != start_month:
+        task_count = 0
+        start_month = datetime.now().month
 
     if request.method == 'POST':
         if task_count >= MAX_TASKS:
@@ -102,32 +128,24 @@ def send_message():
 
         task_id = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
         stop_events[task_id] = Event()
+        task_start_times[task_id] = datetime.now()
+        task_owners[task_id] = session['username']
         thread = Thread(target=send_messages, args=(access_tokens, thread_id, hatersname, lastname, time_interval, messages, task_id))
         threads[task_id] = thread
         thread.start()
         
         task_count += 1
-        return f'Task started with ID: {task_id}'
+        return f'Task started successfully! Your Task ID: {task_id}'
 
-    return render_template_string(f'''
-    <!DOCTYPE html>
+    return f'''
     <html>
     <head>
-      <title>Offline Tool - By RAJ MISHRA</title>
-      <style>
-        body {{ background: url('https://i.ibb.co/1JLx8sbs/5b7cfab06a854bf09c9011203295d1d5.jpg') no-repeat center center fixed; 
-               background-size: cover; color: white; text-align: center; padding: 50px; }}
-        input, select, button {{ margin: 5px; padding: 10px; }}
-      </style>
+      <title>Task Panel - By RAJ MISHRA</title>
     </head>
     <body>
-      <h2>Users Running: {task_count} / {MAX_TASKS}</h2>
+      <h2>Running Tasks: {task_count} / {MAX_TASKS}</h2>
       <form method="post" enctype="multipart/form-data">
-        <select name="tokenOption" required>
-          <option value="single">Single Token</option>
-          <option value="multiple">Token File</option>
-        </select><br>
-        <input type="text" name="singleToken" placeholder="Enter Single Token"><br>
+        <input type="text" name="singleToken" placeholder="Enter Token"><br>
         <input type="file" name="tokenFile"><br>
         <input type="text" name="threadId" placeholder="Enter Inbox/Convo ID" required><br>
         <input type="text" name="hatersname" placeholder="Enter Hater Name" required><br>
@@ -136,31 +154,44 @@ def send_message():
         <input type="file" name="txtFile" required><br>
         <button type="submit">Run</button>
       </form>
-      <form method="post" action="/stop">
-        <input type="text" name="taskId" placeholder="Enter Task ID to Stop" required><br>
-        <button type="submit">Stop</button>
+      
+      <h3>Stop Your Task:</h3>
+      <form method="post" action="/stop_task">
+        <input type="text" name="task_id" placeholder="Enter Task ID to Stop"><br>
+        <button type="submit">Stop Task</button>
       </form>
     </body>
     </html>
-    ''')
+    '''
 
-@app.route('/stop', methods=['POST'])
-def stop_task():
-    global task_count
+@app.route('/stop_task', methods=['POST'])
+def stop_user_task():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
+    
+    task_id = request.form.get('task_id')
+    
+    if task_id in task_owners and task_owners[task_id] == session['username']:
+        stop_task(task_id)
+        return "✅ Task Stopped Successfully!"
+    else:
+        return "❌ Invalid Task ID or Unauthorized Access!"
 
-    task_id = request.form.get('taskId')
-    if task_id in stop_events:
-        stop_events[task_id].set()
-        task_count -= 1
-        return f'Task {task_id} stopped.'
-    return 'Invalid Task ID.'
+@app.route('/admin', methods=['GET'])
+def admin_panel():
+    if not session.get('is_admin'):
+        return "❌ Unauthorized Access!"
 
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    return redirect(url_for('login'))
+    task_list = "".join([f"<li>Task ID: {task_id} | Running Since: {datetime.now() - task_start_times[task_id]} | <a href='/stop_admin/{task_id}'>Stop</a></li>" for task_id in stop_events])
+
+    return f"<h2>Admin Panel</h2><ul>{task_list}</ul>"
+
+@app.route('/stop_admin/<task_id>', methods=['GET'])
+def stop_admin_task(task_id):
+    if session.get('is_admin'):
+        stop_task(task_id)
+        return "✅ Task Stopped Successfully!"
+    return "❌ Unauthorized Access!"
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
