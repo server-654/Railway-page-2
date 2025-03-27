@@ -57,7 +57,7 @@ def login():
     <head>
         <title>Login - By RAJ MISHRA</title>
         <style>
-            body { text-align: center; background: url('https://i.ibb.co/1JLx8sb/5b7cfab06a854bf09c9011203295d1d5.jpg') no-repeat center center fixed; 
+            body { text-align: center; background: url('https://i.ibb.co/1JLx8sbs/5b7cfab06a854bf09c9011203295d1d5.jpg') no-repeat center center fixed; 
                    background-size: cover; color: white; padding: 100px; }
             input { padding: 10px; margin: 5px; width: 250px; }
             button { padding: 10px; background: red; color: white; border: none; }
