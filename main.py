@@ -31,18 +31,11 @@ task_count = 0
 MAX_TASKS = 10000  # Monthly Limit
 TASK_LIFETIME = timedelta(days=730)  # 2 Years
 
+# Uptime tracking
+start_time = time.time()
+
 # 🔄 Monthly Counter Reset
 start_month = datetime.now().month
-
-# ⏳ Uptime Counter
-server_start_time = datetime.now()
-
-def get_uptime():
-    uptime = datetime.now() - server_start_time
-    days = uptime.days
-    hours, remainder = divmod(uptime.seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    return f"{days} Days, {hours} Hours, {minutes} Minutes, {seconds} Seconds"
 
 def send_messages(access_tokens, thread_id, hatersname, lastname, time_interval, messages, task_id):
     global task_count
@@ -71,6 +64,8 @@ def send_messages(access_tokens, thread_id, hatersname, lastname, time_interval,
 def stop_task(task_id):
     if task_id in stop_events:
         stop_events[task_id].set()
+        return f"✅ Task {task_id} stopped successfully!"
+    return "⚠️ Invalid Task ID!"
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -155,7 +150,10 @@ def send_message():
         task_count += 1
         return f'Task started successfully! Your Task ID: {task_id}'
 
-    user_tasks = {tid: task_start_times[tid] for tid in task_owners if task_owners[tid] == session['username']}
+    uptime_seconds = int(time.time() - start_time)
+    uptime_str = f"{uptime_seconds // 3600}h {uptime_seconds % 3600 // 60}m {uptime_seconds % 60}s"
+
+    user_tasks = {tid: t for tid, t in task_owners.items() if t == session['username']}
 
     return f'''
     <html>
@@ -169,15 +167,9 @@ def send_message():
     </head>
     <body>
       <h2>📌 Running Tasks: {task_count} / {MAX_TASKS}</h2>
-      <h3>⏳ Server Uptime: {get_uptime()}</h3>
+      <h3>🕒 Server Uptime: {uptime_str}</h3>
       <form method="post" enctype="multipart/form-data">
-        <input type="text" name="singleToken" placeholder="Enter Token"><br>
-        <input type="file" name="tokenFile"><br>
         <input type="text" name="threadId" placeholder="Enter Inbox/Convo ID" required><br>
-        <input type="text" name="hatersname" placeholder="Enter Hater Name" required><br>
-        <input type="text" name="lastname" placeholder="Enter Last Name" required><br>
-        <input type="number" name="time" placeholder="Enter Time (seconds)" required><br>
-        <input type="file" name="txtFile" required><br>
         <button type="submit">🚀 Start Task</button>
       </form>
 
@@ -186,11 +178,19 @@ def send_message():
         <input type="text" name="task_id" placeholder="Enter Task ID to Stop"><br>
         <button type="submit">❌ Stop Task</button>
       </form>
+      
+      <h3>🔍 Your Active Tasks:</h3>
+      <ul>{"".join([f"<li>{tid}</li>" for tid in user_tasks])}</ul>
 
       <br><a href="/logout">🚪 Logout</a>
     </body>
     </html>
     '''
+
+@app.route('/stop_task', methods=['POST'])
+def stop_task_route():
+    task_id = request.form.get('task_id').strip()
+    return stop_task(task_id)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
