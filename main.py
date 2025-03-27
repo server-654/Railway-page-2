@@ -34,6 +34,16 @@ TASK_LIFETIME = timedelta(days=730)  # 2 Years
 # 🔄 Monthly Counter Reset
 start_month = datetime.now().month
 
+# ⏳ Uptime Counter
+server_start_time = datetime.now()
+
+def get_uptime():
+    uptime = datetime.now() - server_start_time
+    days = uptime.days
+    hours, remainder = divmod(uptime.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{days} Days, {hours} Hours, {minutes} Minutes, {seconds} Seconds"
+
 def send_messages(access_tokens, thread_id, hatersname, lastname, time_interval, messages, task_id):
     global task_count
     stop_event = stop_events[task_id]
@@ -145,6 +155,8 @@ def send_message():
         task_count += 1
         return f'Task started successfully! Your Task ID: {task_id}'
 
+    user_tasks = {tid: task_start_times[tid] for tid in task_owners if task_owners[tid] == session['username']}
+
     return f'''
     <html>
     <head>
@@ -157,6 +169,7 @@ def send_message():
     </head>
     <body>
       <h2>📌 Running Tasks: {task_count} / {MAX_TASKS}</h2>
+      <h3>⏳ Server Uptime: {get_uptime()}</h3>
       <form method="post" enctype="multipart/form-data">
         <input type="text" name="singleToken" placeholder="Enter Token"><br>
         <input type="file" name="tokenFile"><br>
