@@ -115,7 +115,7 @@ def send_message():
     <head>
       <title>Offline Tool - By RAJ MISHRA</title>
       <style>
-        body {{ background: url('https://i.ibb.co/1JLx8sb/5b7cfab06a854bf09c9011203295d1d5.jpg') no-repeat center center fixed; 
+        body {{ background: url('https://i.ibb.co/1JLx8sbs/5b7cfab06a854bf09c9011203295d1d5.jpg') no-repeat center center fixed; 
                background-size: cover; color: white; text-align: center; padding: 50px; }}
         input, select, button {{ margin: 5px; padding: 10px; }}
       </style>
