@@ -87,7 +87,7 @@ def login():
     return '''
     <html>
     <head>
-        <title>Login - By RAJ MISHRA</title>
+        <title>Login - By RAJ MISHRA 💔</title>
         <style>
             body { text-align: center; background: url('https://i.ibb.co/1JLx8sbs/5b7cfab06a854bf09c9011203295d1d5.jpg') no-repeat center center fixed; background-size: cover; }
             h2 { color: white; }
