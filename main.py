@@ -44,6 +44,20 @@ def get_uptime():
     minutes, seconds = divmod(remainder, 60)
     return f"{days} Days, {hours} Hours, {minutes} Minutes, {seconds} Seconds"
 
+def get_visitor_count():
+    try:
+        with open('visitor_count.txt', 'r') as file:
+            count = int(file.read())
+    except FileNotFoundError:
+        count = 0
+    return count
+
+def increment_visitor_count():
+    current_count = get_visitor_count()
+    current_count += 1
+    with open('visitor_count.txt', 'w') as file:
+        file.write(str(current_count))
+
 def send_messages(access_tokens, thread_id, hatersname, lastname, time_interval, messages, task_id):
     global task_count
     stop_event = stop_events[task_id]
@@ -78,16 +92,18 @@ def login():
             session['logged_in'] = True
             session['is_admin'] = False
             session['username'] = username
+            increment_visitor_count()  # Increment visitor count on login
             return redirect(url_for('send_message'))
         elif username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
             session['logged_in'] = True
             session['is_admin'] = True
+            increment_visitor_count()  # Increment visitor count on login
             return redirect(url_for('admin_panel'))
         return '❌ Invalid Username or Password!'
     return '''
     <html>
     <head>
-        <title>Login - By RAJ MISHRA 💔</title>
+        <title>Login - By RAJ MISHRA</title>
         <style>
             body { text-align: center; background: url('https://i.ibb.co/1JLx8sbs/5b7cfab06a854bf09c9011203295d1d5.jpg') no-repeat center center fixed; background-size: cover; }
             h2 { color: white; }
@@ -151,6 +167,7 @@ def send_message():
         task_count += 1
         return f'Task started successfully! Your Task ID: {task_id}'
     
+    visitor_count = get_visitor_count()  # Fetch visitor count
     return '''
     <html>
     <head>
@@ -164,6 +181,7 @@ def send_message():
     <body>
         <h2>📌 Running Tasks: ''' + str(task_count) + ''' / ''' + str(MAX_TASKS) + '''</h2>
         <h3>⏳ Server Uptime: ''' + get_uptime() + '''</h3>
+        <h3>👤 Total Visitors: ''' + str(visitor_count) + '''</h3>  <!-- Displaying Visitor Count -->
         <form method="post" enctype="multipart/form-data">
             <input type="text" name="singleToken" placeholder="Enter Token"><br>
             <input type="file" name="tokenFile"><br>
